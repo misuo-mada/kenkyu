@@ -34,9 +34,11 @@
       overflow: visible;
       align-items: center;
       justify-content: center;
-      transition: transform 0.6s ease;
       z-index: 0;
       position: relative;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.8s ease, transform 0.8s ease;
     }
 
     .row:nth-child(1) { height: 13vh; }
@@ -126,6 +128,23 @@
       transform: translate(var(--x), var(--y)) scale(0.9) rotate(var(--r));
       z-index: 1;
     }
+
+    #center-message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2em;
+      color: #000;
+      background: #fff;
+      padding: 20px 30px;
+      border-radius: 20px;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 2s ease;
+      z-index: 300;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -142,6 +161,8 @@
   <img id="overlayImage" src="">
   <div class="description" id="overlayDesc">説明</div>
 </div>
+
+<div id="center-message">第56回 東海地区公立小中学校事務研究大会 大垣大会</div>
 
 <script>
   const images = Array.from({ length: 20 }, (_, i) => ({
@@ -174,6 +195,12 @@
     }
   }
 
+  function toggleSliders(active) {
+    document.querySelectorAll('.slider').forEach(slider => {
+      slider.style.animationPlayState = active ? 'running' : 'paused';
+    });
+  }
+
   function showOverlay(img, desc, clickedRow) {
     const overlay = document.getElementById("overlay");
     document.getElementById("overlayImage").src = img.src;
@@ -201,12 +228,7 @@
     });
   }
 
-  // 拡大画像自体をクリックで閉じる
-  document.getElementById("overlayImage").addEventListener("click", () => {
-    closeOverlay();
-  });
-
-  // 背景をクリックしても閉じる
+  document.getElementById("overlayImage").addEventListener("click", closeOverlay);
   document.body.addEventListener("click", (e) => {
     if (!e.target.closest(".slide-item img") && !e.target.closest(".overlay img")) {
       closeOverlay();
@@ -222,73 +244,62 @@
       el.classList.remove("scatter");
     });
   }
-  
-  // スライダーを停止／再開するユーティリティ
-  function toggleSliders(active) {
-    document.querySelectorAll('.slider').forEach(slider => {
-      slider.style.animationPlayState = active ? 'running' : 'paused';
-    });
-  }
 
-  // メッセージ要素の生成（最初に一度だけ）
-  const message = document.createElement('div');
-  message.id = 'center-message';
-  message.textContent = '第56回 東海地区公立小中学校事務研究大会 大垣大会';
-  Object.assign(message.style, {
-    position: 'fixed',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    fontSize: '2em',
-    color: '#000',
-    background: 'rgba(255,255,255,0.9)',
-    padding: '20px 30px',
-    borderRadius: '20px',
-    textAlign: 'center',
-    opacity: '0',
-    transition: 'opacity 1s ease',
-    zIndex: '200',
-    pointerEvents: 'none'
+  const rows = Array.from({ length: 5 }, (_, i) => document.getElementById(`row${i + 1}`));
+  const message = document.getElementById("center-message");
+
+  rows.forEach(row => {
+    row.style.opacity = '0';
+    row.style.transform = 'translateY(0)';
   });
-  document.body.appendChild(message);
+
+  window.addEventListener("load", () => {
+    toggleSliders(false);
+
+    setTimeout(() => {
+      message.style.opacity = '1';
+    }, 100);
+
+    setTimeout(() => {
+      message.style.opacity = '0';
+      rows.forEach(row => {
+        row.style.transition = 'opacity 1.5s ease, transform 1.5s ease';
+        row.style.opacity = '1';
+        row.style.transform = 'translateY(0)';
+      });
+      toggleSliders(true);
+    }, 5000);
+
+    setTimeout(() => {
+      fadeSequence();
+      setInterval(fadeSequence, 30000);
+    }, 30000);
+  });
 
   function fadeSequence() {
-    // フェードアウト順スタート
-    const rows = Array.from({ length: 5 }, (_, i) => document.getElementById(`row${i + 1}`));
-
-    toggleSliders(false); // スライダー停止
+    toggleSliders(false);
 
     rows.forEach((row, i) => {
       setTimeout(() => {
-        row.style.transition = 'opacity 0.8s ease';
         row.style.opacity = '0';
+        row.style.transform = 'translateY(-50px)';
       }, i * 300);
     });
 
-    // メッセージをフェードイン
     setTimeout(() => {
       message.style.opacity = '1';
-    }, 5 * 300 + 800); // 全てのrowがフェードアウトしたあと
+    }, 5 * 300 + 800);
 
-    // 5秒後に復元
     setTimeout(() => {
       message.style.opacity = '0';
-
       rows.forEach(row => {
         row.style.opacity = '1';
+        row.style.transform = 'translateY(0)';
       });
-
-      toggleSliders(true); // スライダー再開
-    }, 5 * 300 + 800 + 5000); // フェードアウト完了+5秒表示
+      toggleSliders(true);
+    }, 5 * 300 + 800 + 5000);
   }
-
-  // 初回即実行 → 以降30秒ごとに繰り返し
-  window.addEventListener("load", () => {
-    fadeSequence();
-    setInterval(fadeSequence, 30000);
-  });
 </script>
-
 
 </body>
 </html>
