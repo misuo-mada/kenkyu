@@ -39,7 +39,7 @@
       position: relative;
     }
 
-    .row:nth-child(1) { height: 25vh; }
+    .row:nth-child(1) { height: 13vh; }
     .row:nth-child(3) { height: 30vh; }
     .row:nth-child(2),
     .row:nth-child(4),
@@ -79,7 +79,7 @@
       height: 18vh;
     }
 
-    .row:nth-child(1) .slide-item img { height: 24vh; }
+    .row:nth-child(1) .slide-item img { height: 13vh; }
     .row:nth-child(3) .slide-item img { height: 30vh; }
 
     .overlay {
@@ -222,7 +222,73 @@
       el.classList.remove("scatter");
     });
   }
+  
+  // スライダーを停止／再開するユーティリティ
+  function toggleSliders(active) {
+    document.querySelectorAll('.slider').forEach(slider => {
+      slider.style.animationPlayState = active ? 'running' : 'paused';
+    });
+  }
+
+  // メッセージ要素の生成（最初に一度だけ）
+  const message = document.createElement('div');
+  message.id = 'center-message';
+  message.textContent = '第56回 東海地区公立小中学校事務研究大会 大垣大会';
+  Object.assign(message.style, {
+    position: 'fixed',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    fontSize: '2em',
+    color: '#000',
+    background: 'rgba(255,255,255,0.9)',
+    padding: '20px 30px',
+    borderRadius: '20px',
+    textAlign: 'center',
+    opacity: '0',
+    transition: 'opacity 1s ease',
+    zIndex: '200',
+    pointerEvents: 'none'
+  });
+  document.body.appendChild(message);
+
+  function fadeSequence() {
+    // フェードアウト順スタート
+    const rows = Array.from({ length: 5 }, (_, i) => document.getElementById(`row${i + 1}`));
+
+    toggleSliders(false); // スライダー停止
+
+    rows.forEach((row, i) => {
+      setTimeout(() => {
+        row.style.transition = 'opacity 0.8s ease';
+        row.style.opacity = '0';
+      }, i * 300);
+    });
+
+    // メッセージをフェードイン
+    setTimeout(() => {
+      message.style.opacity = '1';
+    }, 5 * 300 + 800); // 全てのrowがフェードアウトしたあと
+
+    // 5秒後に復元
+    setTimeout(() => {
+      message.style.opacity = '0';
+
+      rows.forEach(row => {
+        row.style.opacity = '1';
+      });
+
+      toggleSliders(true); // スライダー再開
+    }, 5 * 300 + 800 + 5000); // フェードアウト完了+5秒表示
+  }
+
+  // 初回即実行 → 以降30秒ごとに繰り返し
+  window.addEventListener("load", () => {
+    fadeSequence();
+    setInterval(fadeSequence, 30000);
+  });
 </script>
+
 
 </body>
 </html>
