@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>ランダムスライド＆大量画像UI</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #ffffff;
+      font-family: sans-serif;
+      overflow: hidden;
+    }
+    .container {
+      height: 100vh;
+      position: relative;
+    }
+    .row {
+      display: flex;
+      overflow: visible;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.6s ease;
+      z-index: 0;
+      position: relative;
+    }
+
+    .row:nth-child(1) { height: 25vh; }
+    .row:nth-child(3) { height: 30vh; }
+    .row:nth-child(2),
+    .row:nth-child(4),
+    .row:nth-child(5) { height: 20vh; }
+
+    .slider {
+      display: flex;
+      gap: 20px;
+      will-change: transform;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
+
+    @keyframes slide-left {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    @keyframes slide-right {
+      0% { transform: translateX(-50%); }
+      100% { transform: translateX(0); }
+    }
+
+    .slide-left { animation-name: slide-left; }
+    .slide-right { animation-name: slide-right; }
+
+    .slide-item {
+      flex-shrink: 0;
+      transition: all 0.6s ease;
+      position: relative;
+    }
+
+    .slide-item img {
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.6s ease;
+      height: 18vh;
+    }
+
+    .row:nth-child(1) .slide-item img { height: 24vh; }
+    .row:nth-child(3) .slide-item img { height: 40vh; }
+
+    .overlay {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      pointer-events: none;
+    }
+
+    .overlay img {
+      height: 60vh;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(255,255,255,0.4);
+      z-index: 101;
+    }
+
+    .overlay .description {
+      color: white;
+      margin-top: 15px;
+      font-size: 1.2em;
+      background: rgba(0,0,0,0.6);
+      padding: 10px 20px;
+      border-radius: 10px;
+      z-index: 102;
+    }
+
+    .overlay.active { display: flex; }
+
+    .row.push-up { transform: translateY(-10vh); }
+    .row.push-down { transform: translateY(10vh); }
+
+    .scatter {
+      opacity: 0.5;
+      transform: translate(var(--x), var(--y)) scale(0.9) rotate(var(--r));
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container" id="container">
+  <div class="row" id="row1"><div class="slider"></div></div>
+  <div class="row" id="row2"><div class="slider"></div></div>
+  <div class="row" id="row3"><div class="slider"></div></div>
+  <div class="row" id="row4"><div class="slider"></div></div>
+  <div class="row" id="row5"><div class="slider"></div></div>
+</div>
+
+<div class="overlay" id="overlay">
+  <img id="overlayImage" src="">
+  <div class="description" id="overlayDesc">説明</div>
+</div>
+
+<script>
+  const images = Array.from({ length: 20 }, (_, i) => ({
+    src: `image${i + 1}.jpg`,
+    desc: `画像${i + 1}の説明`
+  }));
+
+  const durations = [30, 45, 60, 40, 50];
+
+  for (let row = 1; row <= 5; row++) {
+    const slider = document.querySelector(`#row${row} .slider`);
+    const randomDir = Math.random() > 0.5 ? 'slide-left' : 'slide-right';
+    slider.classList.add(randomDir);
+    slider.style.animationDuration = durations[row - 1] + "s";
+
+    for (let j = 0; j < 2; j++) {
+      for (let i = 0; i < images.length; i++) {
+        const data = images[i];
+        const div = document.createElement("div");
+        div.className = "slide-item";
+
+        const img = document.createElement("img");
+        img.src = data.src;
+        img.alt = "";
+        img.onclick = () => showOverlay(img, data.desc, row);
+
+        div.appendChild(img);
+        slider.appendChild(div);
+      }
+    }
+  }
+
+  function showOverlay(img, desc, clickedRow) {
+    const overlay = document.getElementById("overlay");
+    document.getElementById("overlayImage").src = img.src;
+    document.getElementById("overlayDesc").innerText = desc;
+    overlay.classList.add("active");
+
+    for (let i = 1; i <= 5; i++) {
+      const row = document.getElementById(`row${i}`);
+      row.classList.remove("push-up", "push-down");
+      if (i < clickedRow) row.classList.add("push-up");
+      else if (i > clickedRow) row.classList.add("push-down");
+    }
+
+    document.querySelectorAll(".slide-item").forEach(el => {
+      el.classList.remove("scatter");
+      if (!el.contains(img)) {
+        const x = (Math.random() - 0.5) * 300 + 'px';
+        const y = (Math.random() - 0.5) * 200 + 'px';
+        const r = (Math.random() - 0.5) * 40 + 'deg';
+        el.style.setProperty('--x', x);
+        el.style.setProperty('--y', y);
+        el.style.setProperty('--r', r);
+        el.classList.add("scatter");
+      }
+    });
+  }
+
+  document.body.addEventListener("click", (e) => {
+    if (!e.target.closest(".slide-item img")) {
+      document.getElementById("overlay").classList.remove("active");
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`row${i}`).classList.remove("push-up", "push-down");
+      }
+      document.querySelectorAll(".slide-item").forEach(el => {
+        el.classList.remove("scatter");
+      });
+    }
+  });
+</script>
+
+</body>
+</html>
